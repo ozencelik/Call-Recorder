@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.Toast;
 
 import com.zen.callrecorder.Database.DatabaseHelper;
 import com.zen.callrecorder.Database.Model.Audio;
@@ -18,7 +19,6 @@ import java.io.File;
 public class AlertDialogActivity extends AppCompatActivity {
 
     public static DatabaseHelper db;
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -39,9 +39,8 @@ public class AlertDialogActivity extends AppCompatActivity {
                         audio.setDuration(duration);
                         db.insertAudio(audio);
 
-                        moveTaskToBack(true);
-                        android.os.Process.killProcess(android.os.Process.myPid());
-                        System.exit(1);
+                        startActivity(new Intent(AlertDialogActivity.this, MainActivity.class));
+                        finish();
 
                     }
                 }).setNegativeButton("No",
@@ -58,9 +57,9 @@ public class AlertDialogActivity extends AppCompatActivity {
                         }
 
                         dialog.cancel();
-                        moveTaskToBack(true);
-                        android.os.Process.killProcess(android.os.Process.myPid());
-                        System.exit(1);
+
+                        startActivity(new Intent(AlertDialogActivity.this, MainActivity.class));
+                        finish();
 
                     }
                 });
@@ -68,4 +67,5 @@ public class AlertDialogActivity extends AppCompatActivity {
         alert.show();
 
     }
+
 }

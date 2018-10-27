@@ -6,6 +6,7 @@ public class Contact {
     public static final String TABLE_NAME = "contacts";
 
     public static final String COLUMN_ID = "id";
+    public static final String COLUMN_CONTACT_LIST = "contactList";
     public static final String COLUMN_CONTACT_NAME = "name";
     public static final String COLUMN_CONTACT_NUMBER = "number";
     public static final String COLUMN_IGNORE_LIST = "ignoreList";
@@ -13,6 +14,7 @@ public class Contact {
 
 
     private int id;
+    private int isInContactList;
     private String contactName;
     private String contactNumber;
     private int isInIgnoreList;
@@ -23,7 +25,8 @@ public class Contact {
     // Create table SQL query
     public static final String CREATE_TABLE =
             "CREATE TABLE " + TABLE_NAME + "("
-                    + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + COLUMN_ID + " INTEGER PRIMARY KEY,"
+                    + COLUMN_CONTACT_LIST + " TEXT,"
                     + COLUMN_CONTACT_NAME + " TEXT,"
                     + COLUMN_CONTACT_NUMBER + " TEXT,"
                     + COLUMN_IGNORE_LIST + " INTEGER,"
@@ -33,8 +36,9 @@ public class Contact {
     public Contact() {
     }
 
-    public Contact(int id, String contactName, String contactNumber, int isInIgnoreList, int isInRecordList) {
+    public Contact(int id, int isInContactList, String contactName, String contactNumber, int isInIgnoreList, int isInRecordList) {
         this.id = id;
+        this.isInContactList = isInContactList;
         this.contactName = contactName;
         this.contactNumber = contactNumber;
         this.isInRecordList = isInRecordList;
@@ -48,6 +52,14 @@ public class Contact {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public int getIsInContactList() {
+        return isInContactList;
+    }
+
+    public void setIsInContactList(int contactId) {
+        this.isInContactList = contactId;
     }
 
     public String getContactName() {

@@ -13,6 +13,9 @@ public class Constant {
     public static final int PERMISSION_REQUEST_CODE = 200;
     public static int DELETED_DAYS = 0;
     public static int ORDER_LIST_STATE = 0; // 0 - Calendar 1 - Name 2 - Duration
+    public static int FIRST_ENTER = 0;//0 - call getContacts 1 - no action
+    public static boolean IS_CONTACT_LOADING = false;
+
 
     public static String AUDIO_FILE_PATH = Environment.getExternalStorageDirectory().toString() + File.separator + "Call Recorder";
     /*
