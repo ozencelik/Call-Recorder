@@ -57,8 +57,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        // `id` will be inserted automatically.
-        // no need to add them
+
+        values.put(Contact.COLUMN_ID, contact.getId());
+        values.put(Contact.COLUMN_CONTACT_LIST, contact.getIsInContactList());
         values.put(Contact.COLUMN_CONTACT_NAME, contact.getContactName());
         values.put(Contact.COLUMN_CONTACT_NUMBER, contact.getContactNumber());
         values.put(Contact.COLUMN_IGNORE_LIST, contact.isInIgnoreList());
@@ -74,6 +75,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return id;
     }
 
+    public void deleteAllContact() {
+        // get writable database as we want to write data
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        db.execSQL("DELETE FROM "+ Contact.TABLE_NAME);
+        // close db connection
+        db.close();
+    }
+
     public boolean isIgnoreContactExist(String contactNumber) {
         String selectQuery = "SELECT * FROM contacts WHERE number = ?;";
 
@@ -84,6 +94,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             do {
                 Contact contact = new Contact(
                         cursor.getInt(cursor.getColumnIndex(Contact.COLUMN_ID)),
+                        cursor.getInt(cursor.getColumnIndex(Contact.COLUMN_CONTACT_LIST)),
                         cursor.getString(cursor.getColumnIndex(Contact.COLUMN_CONTACT_NAME)),
                         cursor.getString(cursor.getColumnIndex(Contact.COLUMN_CONTACT_NUMBER)),
                         cursor.getInt(cursor.getColumnIndex(Contact.COLUMN_IGNORE_LIST)),
@@ -111,6 +122,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             do {
                 Contact contact = new Contact(
                         cursor.getInt(cursor.getColumnIndex(Contact.COLUMN_ID)),
+                        cursor.getInt(cursor.getColumnIndex(Contact.COLUMN_CONTACT_LIST)),
                         cursor.getString(cursor.getColumnIndex(Contact.COLUMN_CONTACT_NAME)),
                         cursor.getString(cursor.getColumnIndex(Contact.COLUMN_CONTACT_NUMBER)),
                         cursor.getInt(cursor.getColumnIndex(Contact.COLUMN_IGNORE_LIST)),
@@ -133,14 +145,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public List<Contact> getAllContacts(int which) {
         List<Contact> contacts = new ArrayList<>();
 
-        String selectQuery = "SELECT  * FROM " + Contact.TABLE_NAME;
+        String selectQuery = "SELECT  * FROM " + Contact.TABLE_NAME + " ORDER BY " +
+                Contact.COLUMN_CONTACT_NAME + " ASC";
+
+        //String selectQuery = "SELECT  * FROM " + Contact.TABLE_NAME;
 
         if(which == 1){
             selectQuery = "SELECT  * FROM " + Contact.TABLE_NAME + " WHERE " +
-                    Contact.COLUMN_IGNORE_LIST+ " = 1" ;
+                    Contact.COLUMN_IGNORE_LIST+ " = 1" + " ORDER BY " +
+                    Contact.COLUMN_CONTACT_NAME + " ASC" ;
         }else if(which == 2){
             selectQuery = "SELECT  * FROM " + Contact.TABLE_NAME + " WHERE " +
-                    Contact.COLUMN_RECORD_LIST+ " = 1" ;
+                    Contact.COLUMN_RECORD_LIST+ " = 1" + " ORDER BY " +
+                    Contact.COLUMN_CONTACT_NAME + " ASC" ;
         }
 
         SQLiteDatabase db = this.getWritableDatabase();
@@ -151,6 +168,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             do {
                 Contact contact = new Contact(
                         cursor.getInt(cursor.getColumnIndex(Contact.COLUMN_ID)),
+                        cursor.getInt(cursor.getColumnIndex(Contact.COLUMN_CONTACT_LIST)),
                         cursor.getString(cursor.getColumnIndex(Contact.COLUMN_CONTACT_NAME)),
                         cursor.getString(cursor.getColumnIndex(Contact.COLUMN_CONTACT_NUMBER)),
                         cursor.getInt(cursor.getColumnIndex(Contact.COLUMN_IGNORE_LIST)),

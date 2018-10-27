@@ -1,17 +1,25 @@
 package com.zen.callrecorder.Activity;
 
+import android.Manifest;
 import android.app.Dialog;
+import android.app.ProgressDialog;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
@@ -39,6 +47,7 @@ import com.zen.callrecorder.Adapter.AudioRecyclerAdapter;
 import com.zen.callrecorder.Constant;
 import com.zen.callrecorder.Database.DatabaseHelper;
 import com.zen.callrecorder.Database.Model.Audio;
+import com.zen.callrecorder.Database.Model.Contact;
 import com.zen.callrecorder.R;
 import com.zen.callrecorder.Utils.MyDividerItemDecoration;
 import com.zen.callrecorder.Utils.RecyclerTouchListener;
@@ -134,7 +143,6 @@ public class MainActivity extends AppCompatActivity implements Runnable, SearchV
         MenuItem search = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(search);
         searchView.setOnQueryTextListener(this);
-
         return true;
     }
 
@@ -192,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements Runnable, SearchV
             return true;
         }else if(id == R.id.action_search){
             return true;
-        }else if(id == R.id.action_order){
+        }else if(id == R.id.action_order && !Constant.IS_CONTACT_LOADING){
 
             ORDER_LIST_STATE = (ORDER_LIST_STATE + 1) % 3;
 
@@ -215,12 +223,11 @@ public class MainActivity extends AppCompatActivity implements Runnable, SearchV
             }
 
             return true;
-        }
+        }else if(Constant.IS_CONTACT_LOADING){}
 
         return super.onOptionsItemSelected(item);
     }
-
-    //////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////
 
 
     //Initialize Components
@@ -723,8 +730,9 @@ public class MainActivity extends AppCompatActivity implements Runnable, SearchV
                     boolean locationAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
                     boolean cameraAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
 
-                    if (locationAccepted && cameraAccepted)
+                    if (locationAccepted && cameraAccepted){
                         Toast.makeText(MainActivity.this, "Permission Granted", Toast.LENGTH_LONG).show();
+                    }
                     else {
 
                         Toast.makeText(MainActivity.this, "Permission Denied !!!", Toast.LENGTH_LONG).show();

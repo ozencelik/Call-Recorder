@@ -1,13 +1,17 @@
 package com.zen.callrecorder.Activity;
 
+import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +22,7 @@ import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +39,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.zen.callrecorder.Constant.COMING_CLASS;
+import static com.zen.callrecorder.Constant.FIRST_ENTER;
+import static com.zen.callrecorder.Constant.IS_CONTACT_LOADING;
 
 /**
  * Created by Ozenc Celik on 10/25/2018
@@ -58,27 +65,18 @@ public class ListActivity extends AppCompatActivity implements SearchView.OnQuer
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
 
+        // Contact Permission
+        if (FIRST_ENTER == 0 && !IS_CONTACT_LOADING &&
+                ContextCompat.checkSelfPermission(ListActivity.this, Manifest.permission.READ_CONTACTS)
+                == PackageManager.PERMISSION_GRANTED) {
+            getDataFromSQLite();
+        }
+
         setupActionBar();
 
         initComponents();
 
         clickListener();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        if(db.getContactsCount() == 0) getDataFromSQLite();
-
-        contactsList.clear();
-        contactsList.addAll(db.getAllContacts(0));
-        mAdapter.notifyDataSetChanged();
-        // refresh complete
-        swipeRefreshLayout.setRefreshing(false);
-
-        toggleEmptyAudios();
-
     }
 
     @Override
@@ -149,6 +147,17 @@ public class ListActivity extends AppCompatActivity implements SearchView.OnQuer
         db = new DatabaseHelper(this);
         contactsList.addAll(db.getAllContacts(0));
 
+
+        reloadTheContacts();
+        //getDataFromSQLite();
+        /*
+        if(db.getContactsCount() == 0){
+            getDataFromSQLite();
+        }else {
+            //db.deleteAllContact();
+            getDataFromSQLite();
+        }*/
+
         mAdapter = new ContactRecyclerAdapter(this, contactsList);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
         recyclerView.setLayoutManager(mLayoutManager);
@@ -174,10 +183,7 @@ public class ListActivity extends AppCompatActivity implements SearchView.OnQuer
                     }
                 }, 3000);
 
-                contactsList.clear();
-                contactsList.addAll(db.getAllContacts(0));
-                mAdapter.notifyDataSetChanged();
-                toggleEmptyAudios();
+                reloadTheContacts();
             }
         });
         // Configure the refreshing colors
@@ -229,11 +235,44 @@ public class ListActivity extends AppCompatActivity implements SearchView.OnQuer
         }
     }
 
-    private void getDataFromSQLite() {
+    private void reloadTheContacts(){
+
         // AsyncTask is used that SQLite operation not blocks the UI Thread.
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
+
+                contactsList.clear();
+                contactsList.addAll(db.getAllContacts(0));
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                super.onPostExecute(aVoid);
+
+                mAdapter.notifyDataSetChanged();
+                toggleEmptyAudios();
+
+            }
+        }.execute();
+
+    }
+
+    private void getDataFromSQLite() {
+
+        IS_CONTACT_LOADING = true;
+        FIRST_ENTER = 1;
+
+        final ProgressDialog progressDialog = new ProgressDialog(ListActivity.this);
+        progressDialog.setMessage("Contacts are loading...");
+        progressDialog.show();
+
+        // AsyncTask is used that SQLite operation not blocks the UI Thread.
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+
                 getContactList();
                 return null;
             }
@@ -241,6 +280,11 @@ public class ListActivity extends AppCompatActivity implements SearchView.OnQuer
             @Override
             protected void onPostExecute(Void aVoid) {
                 super.onPostExecute(aVoid);
+                IS_CONTACT_LOADING = false;
+
+                if (progressDialog.isShowing()) {
+                    progressDialog.dismiss();
+                }
             }
         }.execute();
     }
@@ -275,13 +319,16 @@ public class ListActivity extends AppCompatActivity implements SearchView.OnQuer
                         Log.i(TAG, "Name: " + name);
                         Log.i(TAG, "Phone Number: " + phoneNo);*/
 
+                        //.replaceAll("\\s+","")
                         c = new Contact();
+                        c.setId(Integer.parseInt(id));
+                        c.setIsInContactList(1);
                         c.setContactName(name);
-                        c.setContactNumber(phoneNo.replaceAll("\\s+",""));
+                        c.setContactNumber(phoneNo.replaceAll("[\\s\\-()]", ""));
                         c.setInIgnoreList(0);
                         c.setInRecordList(0);
 
-                        insertContact(c);
+                        db.insertContact(c);
                     }
                     pCur.close();
                 }
@@ -293,13 +340,6 @@ public class ListActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
     //DATABASE STUFF
-
-    public static void insertContact(Contact contact) {
-
-        long id = db.insertContact(contact);
-
-    }
-
     private void updateContactList(List<Contact> list) {
 
         if(COMING_CLASS == 0){
